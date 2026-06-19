@@ -56,27 +56,18 @@ jobs:
           name: ${{ matrix.asset }}
           path: ${{ matrix.asset }}
 
-  release:
-    needs: build
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all built apps
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-
-      - name: Publish to a permanent Release
+      # Each platform publishes its own app to the shared "latest" Release as
+      # soon as it finishes, so a slow runner never blocks the others.
+      - name: Publish this app to the Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: FTS Link Host (latest)
           body: |
             Latest FTS Link Host apps. Download the one for your computer:
-
             - macOS (Apple Silicon / M-series): FTS-Link-Host-macOS-AppleSilicon.zip
             - macOS (Intel): FTS-Link-Host-macOS-Intel.zip
             - Windows: FTS-Link-Host-Windows.exe
 
-            Unsigned, so on first run: macOS - System Settings > Privacy & Security > Open Anyway; Windows - More info > Run anyway.
-          files: dist/**/*
+            Unsigned: first run on macOS - System Settings > Privacy & Security > Open Anyway; Windows - More info > Run anyway.
+          files: ${{ matrix.asset }}
