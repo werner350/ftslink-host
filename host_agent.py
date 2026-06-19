@@ -205,7 +205,20 @@ def main():
     root.title("FTS Link Host")
     root.configure(bg="#0f1115")
     root.geometry("420x300")
-    root.resizable(False, False)
+    # NOTE: do NOT call root.resizable(False, False) — on Windows a fixed-size
+    # Tk window cannot be restored with a single taskbar click (only via
+    # right-click > Restore). Keeping it resizable fixes that; minsize keeps
+    # it from shrinking too small.
+    root.minsize(420, 300)
+
+    # Make a single taskbar click reliably bring the window back to the front.
+    def _on_map(_evt=None):
+        try:
+            root.deiconify()
+            root.lift()
+        except Exception:
+            pass
+    root.bind("<Map>", _on_map)
 
     tk.Label(root, text="FTS Link", fg="#ffffff", bg="#0f1115",
              font=("Helvetica", 20, "bold")).pack(pady=(22, 0))
