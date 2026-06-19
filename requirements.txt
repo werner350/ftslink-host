@@ -1,0 +1,6 @@
+aiortc>=1.9.0
+av>=12.0.0
+websockets>=12.0
+mss>=9.0.1
+numpy>=1.26
+pynput>=1.7.7
