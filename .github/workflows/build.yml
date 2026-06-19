@@ -1,10 +1,12 @@
 name: Build FTS Link Host
 
-# Runs on every push and can be started manually from the Actions tab.
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -14,10 +16,13 @@ jobs:
         include:
           - os: macos-latest
             label: macOS (Apple Silicon)
+            asset: FTS-Link-Host-macOS-AppleSilicon.zip
           - os: macos-13
             label: macOS (Intel)
+            asset: FTS-Link-Host-macOS-Intel.zip
           - os: windows-latest
             label: Windows
+            asset: FTS-Link-Host-Windows.exe
     runs-on: ${{ matrix.os }}
     name: Build ${{ matrix.label }}
 
@@ -37,23 +42,41 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           pyinstaller --noconfirm --windowed --name "FTS Link Host" --collect-all aiortc --collect-all av --collect-all aioice --collect-all pylibsrtp --collect-all google_crc32c --collect-all pynput --collect-all mss host_agent.py
-          ditto -c -k --keepParent "dist/FTS Link Host.app" "FTS-Link-Host.zip"
+          ditto -c -k --keepParent "dist/FTS Link Host.app" "${{ matrix.asset }}"
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
         run: |
           pyinstaller --noconfirm --onefile --windowed --name "FTS Link Host" --collect-all aiortc --collect-all av --collect-all aioice --collect-all pylibsrtp --collect-all google_crc32c --collect-all pynput --collect-all mss host_agent.py
+          Copy-Item "dist/FTS Link Host.exe" "${{ matrix.asset }}"
 
-      - name: Upload macOS artifact
-        if: runner.os == 'macOS'
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FTS-Link-Host-${{ matrix.os }}
-          path: FTS-Link-Host.zip
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
 
-      - name: Upload Windows artifact
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
+  release:
+    needs: build
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all built apps
+        uses: actions/download-artifact@v4
         with:
-          name: FTS-Link-Host-Windows
-          path: dist/FTS Link Host.exe
+          path: dist
+
+      - name: Publish to a permanent Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: FTS Link Host (latest)
+          body: |
+            Latest FTS Link Host apps. Download the one for your computer:
+
+            - macOS (Apple Silicon / M-series): FTS-Link-Host-macOS-AppleSilicon.zip
+            - macOS (Intel): FTS-Link-Host-macOS-Intel.zip
+            - Windows: FTS-Link-Host-Windows.exe
+
+            Unsigned, so on first run: macOS - System Settings > Privacy & Security > Open Anyway; Windows - More info > Run anyway.
+          files: dist/**/*
