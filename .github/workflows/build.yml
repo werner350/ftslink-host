@@ -1,0 +1,59 @@
+name: Build FTS Link Host
+
+# Runs on every push and can be started manually from the Actions tab.
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: macOS (Apple Silicon)
+          - os: macos-13
+            label: macOS (Intel)
+          - os: windows-latest
+            label: Windows
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.label }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --windowed --name "FTS Link Host" --collect-all aiortc --collect-all av --collect-all aioice --collect-all pylibsrtp --collect-all google_crc32c --collect-all pynput --collect-all mss host_agent.py
+          ditto -c -k --keepParent "dist/FTS Link Host.app" "FTS-Link-Host.zip"
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pyinstaller --noconfirm --onefile --windowed --name "FTS Link Host" --collect-all aiortc --collect-all av --collect-all aioice --collect-all pylibsrtp --collect-all google_crc32c --collect-all pynput --collect-all mss host_agent.py
+
+      - name: Upload macOS artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: FTS-Link-Host-${{ matrix.os }}
+          path: FTS-Link-Host.zip
+
+      - name: Upload Windows artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: FTS-Link-Host-Windows
+          path: dist/FTS Link Host.exe
