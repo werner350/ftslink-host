@@ -17,9 +17,6 @@ jobs:
           - os: macos-latest
             label: macOS (Apple Silicon)
             asset: FTS-Link-Host-macOS-AppleSilicon.zip
-          - os: macos-13
-            label: macOS (Intel)
-            asset: FTS-Link-Host-macOS-Intel.zip
           - os: windows-latest
             label: Windows
             asset: FTS-Link-Host-Windows.exe
@@ -66,7 +63,6 @@ jobs:
           body: |
             Latest FTS Link Host apps. Download the one for your computer:
             - macOS (Apple Silicon / M-series): FTS-Link-Host-macOS-AppleSilicon.zip
-            - macOS (Intel): FTS-Link-Host-macOS-Intel.zip
             - Windows: FTS-Link-Host-Windows.exe
 
             Unsigned: first run on macOS - System Settings > Privacy & Security > Open Anyway; Windows - More info > Run anyway.
